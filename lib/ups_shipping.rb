@@ -4,6 +4,7 @@ require 'ups_shipping/address'
 require 'ups_shipping/organization'
 require 'ups_shipping/package'
 require 'ups_shipping/pickup'
+require 'ups_shipping/tracking_response'
 
 module Shipping
 
@@ -72,7 +73,9 @@ module Shipping
           }
           xml.MaximumListSize 3
           xml.AddressKeyFormat {
-            xml.AddressLine address.address_lines[0]
+            xml.AddressLine address.address_line1
+            xml.AddressLine address.address_line2
+            xml.AddressLine address.address_line3
             xml.PoliticalDivision2 address.city
             xml.PoliticalDivision1 address.state
             xml.PostcodePrimaryLow address.zip
@@ -176,6 +179,25 @@ module Shipping
       @http.commit("/ups.app/xml/Track", track_request.to_xml)
     end
 
+    def parse_tracking_response(response)
+      if response["TrackResponse"]["Response"]["ResponseStatusCode"] == "1"
+        last_request = response["TrackResponse"]["Shipment"]["Package"]["Activity"][0]
+        shipment_events = response["TrackResponse"]["Shipment"]["Package"]["Activity"]
+        origin = response["TrackResponse"]["Shipment"]["Shipper"]
+        destination = response["TrackResponse"]["Shipment"]["ShipTo"]
+        tracking_number = response["TrackResponse"]["Shipment"]["Package"]["TrackingNumber"]
+        TrackingResponse.new(
+          :xml => response,
+          :request => last_request,
+          :shipment_events => shipment_events,
+          :origin => origin,
+          :destination => destination,
+          :tracking_number => tracking_number
+        )
+      else
+        return nil
+      end
+    end
 
     private
     def access_request(user, password, license)

@@ -10,7 +10,8 @@ ups = Shipping::UPS.new("login", "password", "license", :test => false)
 
 # Create an address
 address = Shipping::Address.new(
-  :address_lines => ["1402 Faber St.", "APT 2B"],
+  :address_line1 => "1402 Faber St."
+  :address_line2 => "APT 2B"
   :city => "Durham",
   :state => "NC",
   :zip => "27705",

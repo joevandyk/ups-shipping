@@ -15,7 +15,8 @@ describe Shipping::UPS do
     @ups = Shipping::UPS.new(ups_credentials["account"], ups_credentials["password"], ups_credentials["key"], :test => false)
 
     @address = Shipping::Address.new(
-        :address_lines => ["1402 Faber St."],
+        :address_line1 => "1402 Faber St.",
+        :address_line2 => "APT 2B",
         :city => "Durham",
         :state => "NC",
         :zip => "27705",
@@ -28,6 +29,8 @@ describe Shipping::UPS do
       <?xml version="1.0"?>
       <Address>
         <AddressLine1>1402 Faber St.</AddressLine1>
+        <AddressLine2>APT 2B</AddressLine2>
+        <AddressLine3></AddressLine3>
         <City>Durham</City>
         <StateProvinceCode>NC</StateProvinceCode>
         <PostalCode>27705</PostalCode>
@@ -51,9 +54,19 @@ describe Shipping::UPS do
     puts @validate_address
   end
 
-  it "#track_shipment" do
-    tracking_result = @ups.track_shipment("1ZYA52510353561107")
-    tracking_result.should have_key("TrackResponse")
-    tracking_result["TrackResponse"]["Response"]["ResponseStatusCode"].should == "1"
+  it "track shipment" do
+    @tracking_result = @ups.track_shipment("1ZYA52510353561107")
+    @tracking_result.should have_key("TrackResponse")
+    @tracking_result["TrackResponse"]["Response"]["ResponseStatusCode"].should == "1"
+    puts @tracking_result
   end
+
+  it "parse tracking response" do
+    @tracking_result = @ups.track_shipment("1ZYA52510353561107")
+    @parsed_tracking = @ups.parse_tracking_response(@tracking_result)
+    @parsed_tracking.tracking_number.should == "1ZYA52510353561107"
+    puts @parsed_tracking.latest_event
+    puts @parsed_tracking.origin
+  end
+
 end
